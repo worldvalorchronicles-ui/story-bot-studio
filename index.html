@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<title>Story Bot Studio — status</title>
+
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0d1020">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Story Bot">
+
+<style>
+  :root { --bg:#0b0f1e; --card:#141a2f; --card2:#0f1426; --line:#242c4a; --text:#e9edff;
+          --muted:#909abf; --accent:#6d8dff; --ok:#3ddc97; --warn:#ffcc66; --bad:#ff7b7b;
+          --ok-bg:rgba(61,220,151,.14); --warn-bg:rgba(255,204,102,.14); --bad-bg:rgba(255,123,123,.14);
+          --chip:#232c52; --chip-text:#bccbff; --shadow:0 1px 2px rgba(0,0,0,.25); }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#f3f5fb; --card:#ffffff; --card2:#f4f6fc; --line:#dfe4f2; --text:#151a2d;
+            --muted:#5d6788; --accent:#3d5bd9; --ok:#0f8a56; --warn:#9a6700; --bad:#c62f2f;
+            --ok-bg:#dff5ea; --warn-bg:#fdf0d0; --bad-bg:#fde3e3;
+            --chip:#e7ebfa; --chip-text:#33427d; --shadow:0 1px 3px rgba(20,30,70,.08); }
+  }
+  * { box-sizing:border-box }
+  html { -webkit-text-size-adjust:100% }
+  body { margin:0; background:var(--bg); color:var(--text);
+         font:15px/1.5 -apple-system,"Segoe UI",Roboto,system-ui,sans-serif; }
+  a { color:var(--accent); text-decoration:none } a:hover { text-decoration:underline }
+  .wrap { max-width:1120px; margin:0 auto; padding:0 16px }
+  .top { position:sticky; top:0; z-index:5; background:color-mix(in srgb, var(--bg) 88%, transparent);
+         backdrop-filter:blur(10px); border-bottom:1px solid var(--line) }
+  .top .wrap { display:flex; align-items:center; justify-content:space-between; gap:8px 16px;
+               flex-wrap:wrap; padding-top:12px; padding-bottom:12px }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px }
+  .brand i { width:28px; height:28px; border-radius:9px; flex:0 0 auto;
+             background:linear-gradient(135deg,#6d8dff,#b07cff) }
+  .top-meta { color:var(--muted); font-size:13px; display:flex; gap:4px 14px; flex-wrap:wrap }
+  .top-meta b { color:var(--text); font-weight:600 }
+  main.wrap { padding-top:16px; padding-bottom:8px }
+  h2 { font-size:13px; margin:0 0 12px; color:var(--muted); text-transform:uppercase; letter-spacing:.07em }
+  h2 small { text-transform:none; letter-spacing:0; font-weight:400 }
+  h2.section { margin:22px 0 10px }
+  h3 { font-size:17px; margin:0; line-height:1.25 }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px;
+          box-shadow:var(--shadow); min-width:0 }
+  .muted { color:var(--muted); font-size:13px }
+  .eyebrow { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.07em }
+  .empty { color:var(--muted); font-size:14px; padding:6px 0 }
+
+  /* Its inline display:flex would otherwise show the bar even while hidden. */
+  #install-bar[hidden] { display:none !important }
+  #install-bar { max-width:none !important; margin:0 0 14px !important; background:var(--card) !important;
+                 border-color:var(--accent) !important; border-radius:14px !important }
+
+  .banner { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+            background:var(--card); border:1px solid var(--line); border-left:4px solid var(--ok);
+            border-radius:14px; padding:14px 16px; margin-bottom:14px }
+  .banner.warn { border-left-color:var(--warn) } .banner.bad { border-left-color:var(--bad) }
+  .banner-line { margin-top:2px }
+  .btn { display:inline-block; padding:8px 14px; border-radius:10px; border:1px solid var(--line);
+         background:var(--card2); color:var(--text); font-weight:600; font-size:13px; white-space:nowrap }
+  .btn:hover { text-decoration:none; border-color:var(--accent) }
+
+  .kpis { display:grid; gap:12px; grid-template-columns:repeat(2,minmax(0,1fr)) }
+  .kpi { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px 16px;
+         box-shadow:var(--shadow) }
+  .kpi .num { font-size:34px; font-weight:700; line-height:1.1; margin:4px 0 2px;
+              font-variant-numeric:tabular-nums }
+  .kpi.ok .num { color:var(--ok) } .kpi.warn .num { color:var(--warn) } .kpi.bad .num { color:var(--bad) }
+
+  .grid { display:grid; gap:14px; grid-template-columns:1fr }
+  .channel { display:flex; flex-direction:column; gap:12px }
+  .channel-top { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap }
+  .plats { display:flex; gap:6px; flex-wrap:wrap }
+  .plat { font-size:11px; font-weight:600; padding:2px 8px; border-radius:99px;
+          border:1px solid var(--line); color:var(--muted) }
+  .plat.on { background:var(--ok-bg); border-color:transparent; color:var(--ok) }
+  .acct-top { display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin-bottom:6px }
+  .acct-name { color:var(--muted); font-size:13px }
+  .acct-count { font-size:20px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--text) }
+  .acct-count small { font-size:13px; font-weight:500; color:var(--muted) }
+  .acct-count.full { color:var(--warn) }
+  .bar { height:8px; background:var(--card2); border-radius:99px; overflow:hidden }
+  .bar i { display:block; height:100%; border-radius:99px; background:linear-gradient(90deg,#5b7bff,#9a7dff) }
+  .facts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:0 }
+  .facts dt { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.05em }
+  .facts dd { margin:0; font-size:13px; font-weight:600; overflow-wrap:anywhere }
+  .last { background:var(--card2); border-radius:12px; padding:10px 12px; margin-top:auto }
+  .last-top { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap }
+  .last-title { font-size:14px; font-weight:600; margin-top:4px; overflow-wrap:anywhere;
+                display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden }
+  .last.bad b { color:var(--bad) }
+  .reason { color:var(--muted); font-size:12px; margin-top:4px; overflow-wrap:anywhere }
+
+  .pill { display:inline-block; font-size:12px; font-weight:600; padding:2px 9px; border-radius:99px;
+          background:var(--chip); color:var(--chip-text) }
+  .pill.ok { background:var(--ok-bg); color:var(--ok) } .pill.warn { background:var(--warn-bg); color:var(--warn) }
+  .pill.bad { background:var(--bad-bg); color:var(--bad) }
+  .plat-line { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px }
+  .chip { background:var(--chip); color:var(--chip-text); border-radius:99px; padding:1px 9px; font-size:12px }
+  .meta { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:6px }
+
+  .cols { display:grid; gap:14px; grid-template-columns:1fr; margin-top:14px }
+  .stack { display:grid; gap:14px; margin-top:14px }
+  .rows { list-style:none; margin:0; padding:0 }
+  .row { display:flex; flex-direction:column; gap:8px; padding:12px 0; border-top:1px solid var(--line) }
+  .row:first-child { border-top:0; padding-top:0 } .row:last-child { padding-bottom:0 }
+  .row-main { min-width:0 } .row-title { font-weight:600; font-size:14px; overflow-wrap:anywhere }
+  .row-side { display:flex; align-items:center; gap:10px; flex-wrap:wrap }
+  .when { color:var(--muted); font-size:13px; white-space:nowrap }
+  .url { display:block; margin-top:6px; font-size:12px; overflow-wrap:anywhere }
+  .alert { border-left:4px solid var(--bad); margin-top:14px }
+  .row.with-thumb { flex-direction:row; align-items:flex-start; gap:12px }
+  .rthumb { width:128px; aspect-ratio:16/9; object-fit:cover; border-radius:8px; flex:none; background:var(--line) }
+  .rthumb.none { display:grid; place-items:center; font-size:11px; color:var(--muted) }
+  .with-thumb .row-main { flex:1 } .with-thumb .row-side { margin-top:6px }
+  .tls { display:grid; gap:6px; margin-top:8px }
+  .tl { font-size:12px } .tl-name { font-weight:700; margin-bottom:2px }
+  .tl-step { color:var(--muted); display:flex; gap:6px; align-items:baseline; flex-wrap:wrap }
+  .tl-step b { color:var(--text, inherit) }
+  .tl-step i { width:7px; height:7px; border-radius:50%; flex:none; display:inline-block }
+  .tl-step.done i { background:var(--ok) } .tl-step.wait i { background:var(--warn) }
+  .tl-step.fail i { background:var(--bad) }
+  @media (max-width:520px) { .rthumb { width:96px } }
+
+  .tbl { overflow-x:auto; margin:0 -16px; padding:0 16px }
+  table { width:100%; border-collapse:collapse; font-size:14px }
+  td, th { padding:8px 8px; border-top:1px solid var(--line); text-align:center; white-space:nowrap;
+           font-variant-numeric:tabular-nums }
+  thead th { border-top:0; color:var(--muted); font-size:12px; font-weight:600 }
+  tbody th { text-align:left; font-weight:500; color:var(--muted) }
+  thead th:first-child { text-align:left }
+  .heat { display:inline-block; min-width:30px; padding:2px 6px; border-radius:8px;
+          background:color-mix(in srgb, var(--accent) calc(var(--a) * 45%), transparent) }
+  td.total { font-weight:700 }
+
+  .vids { display:grid; gap:10px; grid-template-columns:1fr }
+  .vid { display:flex; gap:12px; padding:8px; border-radius:12px; color:inherit; min-width:0 }
+  .vid:hover { background:var(--card2); text-decoration:none }
+  .vid img, .noimg { width:128px; aspect-ratio:16/9; object-fit:cover; border-radius:10px;
+                     background:var(--card2); flex:0 0 auto }
+  .vid-body { min-width:0 }
+  .vid-title { font-size:14px; font-weight:600; overflow-wrap:anywhere;
+               display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden }
+  footer.wrap { color:var(--muted); font-size:13px; padding-top:22px; padding-bottom:28px }
+
+  @media (min-width:640px) {
+    .grid { grid-template-columns:repeat(2,minmax(0,1fr)) }
+    .vids { grid-template-columns:repeat(2,minmax(0,1fr)) }
+    .row { flex-direction:row; justify-content:space-between; align-items:flex-start; gap:16px }
+    .row-side { flex-direction:column; align-items:flex-end; gap:4px; flex:0 0 auto; text-align:right }
+  }
+  @media (min-width:900px) {
+    body { font-size:16px }
+    .kpis { grid-template-columns:repeat(4,minmax(0,1fr)) }
+    .grid { grid-template-columns:repeat(3,minmax(0,1fr)) }
+    .cols { grid-template-columns:minmax(0,3fr) minmax(0,2fr); align-items:start }
+    .vids { grid-template-columns:repeat(3,minmax(0,1fr)) }
+    .vid { flex-direction:column; gap:8px } .vid img, .noimg { width:100% }
+  }
+</style></head><body>
+<header class="top"><div class="wrap">
+  <div class="brand"><i></i>Story Bot Studio</div>
+  <div class="top-meta"><span>Updated <b>07 Nov 2026, 08:05 PM PKT</b></span><span>Next run <b>07 Nov, 09:30 PM</b></span></div>
+</div></header>
+
+<main class="wrap">
+  
+<div id="install-bar" hidden style="max-width:900px;margin:0 auto 14px;padding:12px 14px;border-radius:12px;
+  background:#16224a;border:1px solid #2c3d78;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+  <span id="install-text">📲 Install Story Bot as an app on this phone</span>
+  <button id="install-btn" style="background:#4f7dff;color:#fff;border:0;border-radius:10px;padding:9px 14px;font-weight:600">Install</button>
+</div>
+<script>
+(function () {
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
+  var bar = document.getElementById('install-bar'), btn = document.getElementById('install-btn'), prompt = null;
+  var standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  if (standalone) return;
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault(); prompt = e; bar.hidden = false;
+  });
+  btn.addEventListener('click', function () {
+    if (!prompt) return;
+    prompt.prompt(); prompt.userChoice.finally(function () { bar.hidden = true; prompt = null; });
+  });
+  if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+    document.getElementById('install-text').textContent = '📲 iPhone: tap Share, then “Add to Home Screen”';
+    btn.hidden = true; bar.hidden = false;
+  }
+})();
+</script>
+
+  
+    <section class="banner ok">
+      <div><div class="eyebrow">Last run</div>
+      <div class="banner-line"><b>1 video built</b> · 06 Nov, 08:30 AM PKT, on GitHub</div></div>
+      <a class='btn' href='https://github.com/worldvalorchronicles-ui/story-bot/actions/runs/42145368711' target='_blank' rel='noopener'>Open the run log</a>
+    </section>
+  <section class='kpis'><div class='kpi ok'><div class='eyebrow'>Uploaded today</div><div class='num'>2</div><div class='muted'>since the YouTube quota reset</div></div><div class='kpi '><div class='eyebrow'>Made in 24 hours</div><div class='num'>3</div><div class='muted'>videos built, uploaded or not</div></div><div class='kpi warn'><div class='eyebrow'>Waiting to upload</div><div class='num'>3</div><div class='muted'>go up when quota allows</div></div><div class='kpi '><div class='eyebrow'>Failed in 24 hours</div><div class='num'>0</div><div class='muted'>nothing failed</div></div></section>
+
+  <h2 class="section">Channels</h2>
+  <div class="grid">
+    <article class="card channel">
+      <div class="channel-top"><h3>Chronovanta</h3><div class="plats"><span class='plat on'>YouTube</span><span class='plat on'>Facebook</span></div></div>
+      
+        <div class="acct">
+          <div class="acct-top">
+            <span class="acct-name">Uploaded today</span>
+            <span class="acct-count ok">2 <small>/ 4</small></span>
+          </div>
+          <div class="bar"><i style="width:50%"></i></div>
+        </div>
+      <dl class="facts"><div><dt>Daily at</dt><dd>05:30 AM PKT</dd></div><div><dt>Pictures</dt><dd>AI pictures</dd></div><div><dt>Waiting</dt><dd>3 to upload</dd></div></dl>
+      <div class='last'><div class='last-top'><span class='muted'>Latest video · 07 Nov, 07:43 AM</span><span class='pill warn'>Built · waiting to upload</span></div><div class='last-title'>Could Sub-Surface AI Detect Tumors Years Before Symptoms? | Chronovanta | Future Technology</div><div class='plat-line'><span class='pill warn'>YouTube ⏳ · 07 Nov, 09:30 PM</span><span class='pill bad'>Facebook ✕ · failed</span></div></div>
+    </article></div>
+
+  
+  
+    <section class="card alert">
+      <h2>Needs a look</h2>
+      <ul class="rows"><li class='row'><div class='row-main'><div class='row-title'>Could Rising Waters Force America to Relocate an Entire Major Metropolis? | Chro</div><div class='meta'><span class='chip'>chronovanta</span></div><div class='reason'>The video was built but could not be uploaded at the time, and its files were only kept for a week.</div></div></li><li class='row'><div class='row-main'><div class='row-title'>Could Autonomous Networks Prevent Financial Collapses? | Chronovanta | Future Te</div><div class='meta'><span class='chip'>chronovanta</span></div><div class='reason'>The video was built but could not be uploaded at the time, and its files were only kept for a week.</div></div></li></ul>
+    </section>
+
+  <div class="cols">
+    <section class="card">
+      <h2>Last 24 hours</h2>
+      <ul class='rows'><li class='row with-thumb'><img class='rthumb' loading='lazy' src='thumbs/14.jpg' alt=''><div class='row-main'><div class='row-title'>Could Sub-Surface AI Detect Tumors Years Before Symptoms? | Chronovanta | Future Technology</div><div class='meta'><span class='chip'>chronovanta</span><span class='chip'>short</span></div><div class='reason'>Held: thumbnail not ready (not in the channel&#x27;s future style (score 37: headline size/weight is 63% smaller than your examples); the remade one also failed: not in the channel&#x27;s future style (score 37</div><div class='row-side'><span class='pill warn'>Built · waiting to upload</span><span class='muted'>07 Nov, 07:43 AM</span></div><div class='tls'><div class='tl'><div class='tl-name'>YouTube</div><div class='tl-step wait'><i></i>Not uploaded yet · next automatic try <b>07 Nov, 09:30 PM PKT</b></div></div><div class='tl'><div class='tl-name'>Facebook</div><div class='tl-step fail'><i></i>Failed: HTTP 400: {&quot;error&quot;:{&quot;message&quot;:&quot;Any of the pages_read_engagement, pages_manage_metadata,\n  <b>07 Nov, 07:43 AM PKT</b></div></div></div></div></li><li class='row with-thumb'><img class='rthumb' loading='lazy' src='thumbs/13.jpg' alt=''><div class='row-main'><div class='row-title'>Could Recursive Self-Improvement Spark Autonomous Intelligence? | Chronovanta | Future Technology</div><div class='meta'><span class='chip'>chronovanta</span><span class='chip'>short</span></div><div class='reason'>Held: thumbnail not ready (not in the channel&#x27;s future style (score 48: headline size/weight is 52% smaller than your examples); the remade one also failed: not in the channel&#x27;s future style (score 42</div><div class='row-side'><span class='pill warn'>Built · waiting to upload</span><span class='muted'>07 Nov, 07:14 AM</span></div><div class='tls'><div class='tl'><div class='tl-name'>YouTube</div><div class='tl-step wait'><i></i>Not uploaded yet · next automatic try <b>07 Nov, 09:30 PM PKT</b></div></div><div class='tl'><div class='tl-name'>Facebook</div><div class='tl-step fail'><i></i>Failed: HTTP 400: {&quot;error&quot;:{&quot;message&quot;:&quot;Any of the pages_read_engagement, pages_manage_metadata,\n  <b>07 Nov, 07:15 AM PKT</b></div></div></div></div></li><li class='row with-thumb'><img class='rthumb' loading='lazy' src='thumbs/12.jpg' alt=''><div class='row-main'><div class='row-title'><a href='https://www.youtube.com/watch?v=-mi_a3-hQVU' target='_blank' rel='noopener'>Could Atmospheric Water Harvesters Sustain Entire Inland Megacities? | Chronovanta | Life In 2050</a></div><div class='meta'><span class='chip'>chronovanta</span><span class='chip'>short</span></div><div class='row-side'><span class='pill ok'>Scheduled on YouTube</span><span class='muted'>08 Nov, 11:00 PM</span></div><div class='tls'><div class='tl'><div class='tl-name'><a href='https://www.youtube.com/watch?v=-mi_a3-hQVU' target='_blank' rel='noopener'>YouTube &#8599;</a></div><div class='tl-step done'><i></i>Uploaded <b>07 Nov, 04:07 PM PKT</b></div><div class='tl-step wait'><i></i>Goes public <b>08 Nov, 11:00 PM PKT</b></div></div><div class='tl'><div class='tl-name'>Facebook</div><div class='tl-step fail'><i></i>Failed: HTTP 400: {&quot;error&quot;:{&quot;message&quot;:&quot;Any of the pages_read_engagement, pages_manage_metadata,\n  <b>07 Nov, 06:52 AM PKT</b></div></div></div></div></li></ul>
+    </section>
+    <section class="card">
+      <h2>Going public next</h2>
+      <ul class='rows'><li class='row with-thumb'><img class='rthumb' loading='lazy' src='thumbs/11.jpg' alt=''><div class='row-main'><div class='row-title'><a href='https://www.youtube.com/watch?v=iFNVntYv9M8' target='_blank' rel='noopener'>Could Self-Healing Bio-Polymers Repair Human Tissues in Real Time? | Chronovanta | Future Technology</a></div><div class='meta'><span class='chip'>chronovanta</span><span class='chip'>short</span></div><div class='tls'><div class='tl'><div class='tl-name'><a href='https://www.youtube.com/watch?v=iFNVntYv9M8' target='_blank' rel='noopener'>YouTube &#8599;</a></div><div class='tl-step done'><i></i>Uploaded <b>06 Nov, 06:38 PM PKT</b></div><div class='tl-step wait'><i></i>Goes public <b>07 Nov, 11:00 PM PKT</b></div></div><div class='tl'><div class='tl-name'>Facebook</div><div class='tl-step fail'><i></i>Failed: HTTP 400: 190: Any of the pages_read_engagement, pages_manage_metadata,
+        pages_read <b>06 Nov, 09:24 AM PKT</b></div></div></div></div></li><li class='row with-thumb'><img class='rthumb' loading='lazy' src='thumbs/5.jpg' alt=''><div class='row-main'><div class='row-title'><a href='https://www.youtube.com/watch?v=NY7kIpxC4gA' target='_blank' rel='noopener'>Could Living Neural Networks Replace Silicon Chips? | Chronovanta | Future Technology</a></div><div class='meta'><span class='chip'>chronovanta</span><span class='chip'>short</span></div><div class='tls'><div class='tl'><div class='tl-name'><a href='https://www.youtube.com/watch?v=NY7kIpxC4gA' target='_blank' rel='noopener'>YouTube &#8599;</a></div><div class='tl-step done'><i></i>Uploaded <b>06 Nov, 04:25 PM PKT</b></div><div class='tl-step wait'><i></i>Goes public <b>08 Nov, 07:00 AM PKT</b></div></div><div class='tl'><div class='tl-name'><a href='https://www.facebook.com/1467122525371778' target='_blank' rel='noopener'>Facebook &#8599;</a></div><div class='tl-step done'><i></i>Uploaded <b>05 Nov, 08:04 AM PKT</b></div><div class='tl-step done'><i></i>Live since <b>05 Nov, 11:00 PM PKT</b></div></div></div></div></li><li class='row with-thumb'><img class='rthumb' loading='lazy' src='thumbs/6.jpg' alt=''><div class='row-main'><div class='row-title'><a href='https://www.youtube.com/watch?v=mkiMry2l5QQ' target='_blank' rel='noopener'>Could Magnetized Plasma Jets Generate Limitless Clean Energy? | Chronovanta | Future Technology</a></div><div class='meta'><span class='chip'>chronovanta</span><span class='chip'>short</span></div><div class='tls'><div class='tl'><div class='tl-name'><a href='https://www.youtube.com/watch?v=mkiMry2l5QQ' target='_blank' rel='noopener'>YouTube &#8599;</a></div><div class='tl-step done'><i></i>Uploaded <b>06 Nov, 04:25 PM PKT</b></div><div class='tl-step wait'><i></i>Goes public <b>08 Nov, 07:00 PM PKT</b></div></div><div class='tl'><div class='tl-name'><a href='https://www.facebook.com/1047992154351306' target='_blank' rel='noopener'>Facebook &#8599;</a></div><div class='tl-step done'><i></i>Uploaded <b>05 Nov, 08:49 AM PKT</b></div><div class='tl-step done'><i></i>Live since <b>06 Nov, 07:00 AM PKT</b></div></div></div></div></li><li class='row with-thumb'><img class='rthumb' loading='lazy' src='thumbs/12.jpg' alt=''><div class='row-main'><div class='row-title'><a href='https://www.youtube.com/watch?v=-mi_a3-hQVU' target='_blank' rel='noopener'>Could Atmospheric Water Harvesters Sustain Entire Inland Megacities? | Chronovanta | Life In 2050</a></div><div class='meta'><span class='chip'>chronovanta</span><span class='chip'>short</span></div><div class='tls'><div class='tl'><div class='tl-name'><a href='https://www.youtube.com/watch?v=-mi_a3-hQVU' target='_blank' rel='noopener'>YouTube &#8599;</a></div><div class='tl-step done'><i></i>Uploaded <b>07 Nov, 04:07 PM PKT</b></div><div class='tl-step wait'><i></i>Goes public <b>08 Nov, 11:00 PM PKT</b></div></div><div class='tl'><div class='tl-name'>Facebook</div><div class='tl-step fail'><i></i>Failed: HTTP 400: {&quot;error&quot;:{&quot;message&quot;:&quot;Any of the pages_read_engagement, pages_manage_metadata,\n  <b>07 Nov, 06:52 AM PKT</b></div></div></div></div></li></ul>
+    </section>
+  </div>
+
+  <div class="stack">
+    <section class="card">
+      <h2>On Facebook <small>videos and posts, newest first</small></h2>
+      <ul class='rows'><li class='row'><div class='row-main'><div class='row-title'>Could Sub-Surface AI Detect Tumors Years Before Symptoms? | Chronovanta | Future Technology</div><div class='meta'><span class='chip'>Chronovanta</span><span class='chip'>Reel</span></div><div class='reason'>HTTP 400: {&quot;error&quot;:{&quot;message&quot;:&quot;Any of the pages_read_engagement, pages_manage_metadata,\n pages_read_user_content, pages_manage_ads, pages_show_list or\n pages_messaging permission(s) must be granted </div></div><div class='row-side'><span class='pill bad'>Not posted to Facebook</span><span class='muted'>07 Nov, 07:43 AM</span></div></li><li class='row'><div class='row-main'><div class='row-title'>Could Recursive Self-Improvement Spark Autonomous Intelligence? | Chronovanta | Future Technology</div><div class='meta'><span class='chip'>Chronovanta</span><span class='chip'>Reel</span></div><div class='reason'>HTTP 400: {&quot;error&quot;:{&quot;message&quot;:&quot;Any of the pages_read_engagement, pages_manage_metadata,\n pages_read_user_content, pages_manage_ads, pages_show_list or\n pages_messaging permission(s) must be granted </div></div><div class='row-side'><span class='pill bad'>Not posted to Facebook</span><span class='muted'>07 Nov, 07:15 AM</span></div></li><li class='row'><div class='row-main'><div class='row-title'>Could Atmospheric Water Harvesters Sustain Entire Inland Megacities? | Chronovanta | Life In 2050</div><div class='meta'><span class='chip'>Chronovanta</span><span class='chip'>Reel</span></div><div class='reason'>HTTP 400: {&quot;error&quot;:{&quot;message&quot;:&quot;Any of the pages_read_engagement, pages_manage_metadata,\n pages_read_user_content, pages_manage_ads, pages_show_list or\n pages_messaging permission(s) must be granted </div></div><div class='row-side'><span class='pill bad'>Not posted to Facebook</span><span class='muted'>07 Nov, 06:52 AM</span></div></li><li class='row'><div class='row-main'><div class='row-title'>Could Self-Healing Bio-Polymers Repair Human Tissues in Real Time? | Chronovanta | Future Technology</div><div class='meta'><span class='chip'>Chronovanta</span><span class='chip'>Reel</span></div><div class='reason'>HTTP 400: 190: Any of the pages_read_engagement, pages_manage_metadata, pages_read_user_content, pages_manage_ads, pages_show_list or pages_messaging permission(s) must be granted before impersonating</div></div><div class='row-side'><span class='pill bad'>Not posted to Facebook</span><span class='muted'>06 Nov, 09:24 AM</span></div></li><li class='row'><div class='row-main'><div class='row-title'>Could Floating Arcologies Protect Coastal Mega-Cities From Rising Seas? | Chronovanta | Life In 2050</div><div class='meta'><span class='chip'>Chronovanta</span><span class='chip'>Reel</span></div><div class='reason'>HTTP 400: 190: Any of the pages_read_engagement, pages_manage_metadata, pages_read_user_content, pages_manage_ads, pages_show_list or pages_messaging permission(s) must be granted before impersonating</div></div><div class='row-side'><span class='pill bad'>Not posted to Facebook</span><span class='muted'>06 Nov, 09:04 AM</span></div></li><li class='row'><div class='row-main'><div class='row-title'>Could Engineered Gut Microbes Reverse Metabolic Disease? | Chronovanta | Future Technology</div><div class='meta'><span class='chip'>Chronovanta</span><span class='chip'>Reel</span></div><div class='reason'>HTTP 400: 190: Any of the pages_read_engagement, pages_manage_metadata, pages_read_user_content, pages_manage_ads, pages_show_list or pages_messaging permission(s) must be granted before impersonating</div></div><div class='row-side'><span class='pill bad'>Not posted to Facebook</span><span class='muted'>06 Nov, 08:46 AM</span></div></li><li class='row'><div class='row-main'><div class='row-title'>Could Rising Waters Force America to Relocate an Entire Major Metropolis? | Chronovanta</div><div class='meta'><span class='chip'>Chronovanta</span><span class='chip'>Video</span></div><div class='reason'>HTTP 400: {&quot;error&quot;:{&quot;message&quot;:&quot;Any of the pages_read_engagement, pages_manage_metadata,\n pages_read_user_content, pages_manage_ads, pages_show_list or\n pages_messaging permission(s) must be granted </div></div><div class='row-side'><span class='pill bad'>Not posted to Facebook</span><span class='muted'>06 Nov, 08:30 AM</span></div></li><li class='row'><div class='row-main'><div class='row-title'>Could Autonomous Networks Prevent Financial Collapses? | Chronovanta | Future Technology</div><div class='meta'><span class='chip'>Chronovanta</span><span class='chip'>Video</span></div><div class='reason'>HTTP 400: {&quot;error&quot;:{&quot;message&quot;:&quot;Any of the pages_read_engagement, pages_manage_metadata,\n pages_read_user_content, pages_manage_ads, pages_show_list or\n pages_messaging permission(s) must be granted </div></div><div class='row-side'><span class='pill bad'>Not posted to Facebook</span><span class='muted'>06 Nov, 01:59 AM</span></div></li><li class='row'><div class='row-main'><div class='row-title'><a href='https://www.facebook.com/1047992154351306' target='_blank' rel='noopener'>Could Magnetized Plasma Jets Generate Limitless Clean Energy? | Chronovanta | Future Technology</a></div><div class='meta'><span class='chip'>Chronovanta</span><span class='chip'>Reel</span></div><a class='url' href='https://www.facebook.com/1047992154351306' target='_blank' rel='noopener'>facebook.com/1047992154351306</a></div><div class='row-side'><span class='pill ok'>Live on Facebook</span><span class='muted'>05 Nov, 08:49 AM</span></div></li><li class='row'><div class='row-main'><div class='row-title'><a href='https://www.facebook.com/1467122525371778' target='_blank' rel='noopener'>Could Living Neural Networks Replace Silicon Chips? | Chronovanta | Future Technology</a></div><div class='meta'><span class='chip'>Chronovanta</span><span class='chip'>Reel</span></div><a class='url' href='https://www.facebook.com/1467122525371778' target='_blank' rel='noopener'>facebook.com/1467122525371778</a></div><div class='row-side'><span class='pill ok'>Live on Facebook</span><span class='muted'>05 Nov, 08:04 AM</span></div></li><li class='row'><div class='row-main'><div class='row-title'><a href='https://www.facebook.com/reel/28891615013792262' target='_blank' rel='noopener'>Could Focused Ultrasound Silence Chronic Pain? | Chronovanta | Future Technology</a></div><div class='meta'><span class='chip'>Chronovanta</span><span class='chip'>Reel</span></div><a class='url' href='https://www.facebook.com/reel/28891615013792262' target='_blank' rel='noopener'>facebook.com/reel/28891615013792262</a></div><div class='row-side'><span class='pill ok'>Live on Facebook</span><span class='muted'>05 Nov, 07:16 AM</span></div></li><li class='row'><div class='row-main'><div class='row-title'><a href='https://www.facebook.com/reel/1141155708353978' target='_blank' rel='noopener'>Could Synthetic Photosynthesis Power Future Megacities? | Chronovanta | Life In 2050</a></div><div class='meta'><span class='chip'>Chronovanta</span><span class='chip'>Reel</span></div><a class='url' href='https://www.facebook.com/reel/1141155708353978' target='_blank' rel='noopener'>facebook.com/reel/1141155708353978</a></div><div class='row-side'><span class='pill ok'>Live on Facebook</span><span class='muted'>05 Nov, 01:50 AM</span></div></li><li class='row'><div class='row-main'><div class='row-title'><a href='https://www.facebook.com/reel/1705492674509314' target='_blank' rel='noopener'>Could Sound Waves Shape Future Architecture? | Chronovanta | Life In 2050</a></div><div class='meta'><span class='chip'>Chronovanta</span><span class='chip'>Reel</span></div><a class='url' href='https://www.facebook.com/reel/1705492674509314' target='_blank' rel='noopener'>facebook.com/reel/1705492674509314</a></div><div class='row-side'><span class='pill ok'>Live on Facebook</span><span class='muted'>05 Nov, 01:27 AM</span></div></li><li class='row'><div class='row-main'><div class='row-title'><a href='https://www.facebook.com/2538283176641244' target='_blank' rel='noopener'>Could AI Architects Design Entire Cities? | Chronovanta | Future Technology</a></div><div class='meta'><span class='chip'>Chronovanta</span><span class='chip'>Reel</span></div><a class='url' href='https://www.facebook.com/2538283176641244' target='_blank' rel='noopener'>facebook.com/2538283176641244</a></div><div class='row-side'><span class='pill ok'>Live on Facebook</span><span class='muted'>05 Nov, 01:02 AM</span></div></li><li class='row'><div class='row-main'><div class='row-title'><a href='https://www.facebook.com/122102036859535084' target='_blank' rel='noopener'>Mapping the Silent Oceans of Europa</a></div><div class='meta'><span class='chip'>Chronovanta</span><span class='chip'>Picture post</span></div><a class='url' href='https://www.facebook.com/122102036859535084' target='_blank' rel='noopener'>facebook.com/122102036859535084</a></div><div class='row-side'><span class='pill ok'>Live on Facebook</span><span class='muted'>05 Nov, 12:04 AM</span></div></li><li class='row'><div class='row-main'><div class='row-title'><a href='https://www.facebook.com/1501586269699678_122102036469535084' target='_blank' rel='noopener'>welcome:1501586269699678</a></div><div class='meta'><span class='chip'>Chronovanta</span><span class='chip'>Picture post</span></div><a class='url' href='https://www.facebook.com/1501586269699678_122102036469535084' target='_blank' rel='noopener'>facebook.com/1501586269699678_122102036469535084</a></div><div class='row-side'><span class='pill ok'>Live on Facebook</span><span class='muted'>05 Nov, 12:04 AM</span></div></li></ul>
+    </section>
+    <section class="card">
+      <h2>Uploads <small>last 7 days</small></h2>
+      <div class='tbl'><table class='week'><thead><tr><th>Day</th><th>Chronovanta</th><th>Total</th></tr></thead><tbody><tr><th scope='row'>Sun 01 Nov</th><td><span class='heat' style='--a:0.00'>·</span></td><td class='total'>0</td></tr><tr><th scope='row'>Mon 02 Nov</th><td><span class='heat' style='--a:0.00'>·</span></td><td class='total'>0</td></tr><tr><th scope='row'>Tue 03 Nov</th><td><span class='heat' style='--a:0.00'>·</span></td><td class='total'>0</td></tr><tr><th scope='row'>Wed 04 Nov</th><td><span class='heat' style='--a:0.00'>·</span></td><td class='total'>0</td></tr><tr><th scope='row'>Thu 05 Nov</th><td><span class='heat' style='--a:0.00'>·</span></td><td class='total'>0</td></tr><tr><th scope='row'>Fri 06 Nov</th><td><span class='heat' style='--a:1.00'>5</span></td><td class='total'>5</td></tr><tr><th scope='row'>Sat 07 Nov</th><td><span class='heat' style='--a:0.80'>4</span></td><td class='total'>4</td></tr></tbody></table></div>
+    </section>
+    <section class="card">
+      <h2>Latest videos</h2>
+      <div class='vids'>
+    <a class="vid" href="https://www.youtube.com/watch?v=zzCD9I3B0z0" target="_blank" rel="noopener">
+      <img loading="lazy" src="https://i.ytimg.com/vi/zzCD9I3B0z0/mqdefault.jpg" alt="">
+      <div class="vid-body">
+        <div class="vid-title">Could Synthetic Photosynthesis Power Future Megacities? | Chronovanta | Life In 2050</div>
+        <div class="meta"><span class='chip'>chronovanta</span><span class='chip'>short</span><span class="muted">Published 07 Nov, 06:24 PM</span></div>
+      </div>
+    </a>
+    <a class="vid" href="https://www.youtube.com/watch?v=-mi_a3-hQVU" target="_blank" rel="noopener">
+      <img loading="lazy" src="https://i.ytimg.com/vi/-mi_a3-hQVU/mqdefault.jpg" alt="">
+      <div class="vid-body">
+        <div class="vid-title">Could Atmospheric Water Harvesters Sustain Entire Inland Megacities? | Chronovanta | Life In 2050</div>
+        <div class="meta"><span class='chip'>chronovanta</span><span class='chip'>short</span><span class="muted">Goes public 08 Nov, 11:00 PM</span></div>
+      </div>
+    </a>
+    <a class="vid" href="https://www.youtube.com/watch?v=7nbpXewBdA4" target="_blank" rel="noopener">
+      <img loading="lazy" src="https://i.ytimg.com/vi/7nbpXewBdA4/mqdefault.jpg" alt="">
+      <div class="vid-body">
+        <div class="vid-title">Could Focused Ultrasound Silence Chronic Pain? | Chronovanta | Future Technology</div>
+        <div class="meta"><span class='chip'>chronovanta</span><span class='chip'>short</span><span class="muted">Published 07 Nov, 10:16 AM</span></div>
+      </div>
+    </a>
+    <a class="vid" href="https://www.youtube.com/watch?v=fkoej14H1yk" target="_blank" rel="noopener">
+      <img loading="lazy" src="https://i.ytimg.com/vi/fkoej14H1yk/mqdefault.jpg" alt="">
+      <div class="vid-body">
+        <div class="vid-title">Could Sound Waves Shape Future Architecture? | Chronovanta | Life In 2050</div>
+        <div class="meta"><span class='chip'>chronovanta</span><span class='chip'>short</span><span class="muted">Published 07 Nov, 12:25 AM</span></div>
+      </div>
+    </a>
+    <a class="vid" href="https://www.youtube.com/watch?v=iFNVntYv9M8" target="_blank" rel="noopener">
+      <img loading="lazy" src="https://i.ytimg.com/vi/iFNVntYv9M8/mqdefault.jpg" alt="">
+      <div class="vid-body">
+        <div class="vid-title">Could Self-Healing Bio-Polymers Repair Human Tissues in Real Time? | Chronovanta | Future Technology</div>
+        <div class="meta"><span class='chip'>chronovanta</span><span class='chip'>short</span><span class="muted">Goes public 07 Nov, 11:00 PM</span></div>
+      </div>
+    </a>
+    <a class="vid" href="https://www.youtube.com/watch?v=NY7kIpxC4gA" target="_blank" rel="noopener">
+      <img loading="lazy" src="https://i.ytimg.com/vi/NY7kIpxC4gA/mqdefault.jpg" alt="">
+      <div class="vid-body">
+        <div class="vid-title">Could Living Neural Networks Replace Silicon Chips? | Chronovanta | Future Technology</div>
+        <div class="meta"><span class='chip'>chronovanta</span><span class='chip'>short</span><span class="muted">Goes public 08 Nov, 07:00 AM</span></div>
+      </div>
+    </a>
+    <a class="vid" href="https://www.youtube.com/watch?v=mkiMry2l5QQ" target="_blank" rel="noopener">
+      <img loading="lazy" src="https://i.ytimg.com/vi/mkiMry2l5QQ/mqdefault.jpg" alt="">
+      <div class="vid-body">
+        <div class="vid-title">Could Magnetized Plasma Jets Generate Limitless Clean Energy? | Chronovanta | Future Technology</div>
+        <div class="meta"><span class='chip'>chronovanta</span><span class='chip'>short</span><span class="muted">Goes public 08 Nov, 07:00 PM</span></div>
+      </div>
+    </a>
+    <a class="vid" href="https://www.youtube.com/watch?v=kcYUu-Cfc7A" target="_blank" rel="noopener">
+      <img loading="lazy" src="https://i.ytimg.com/vi/kcYUu-Cfc7A/mqdefault.jpg" alt="">
+      <div class="vid-body">
+        <div class="vid-title">Could Engineered Gut Microbes Reverse Metabolic Disease? | Chronovanta | Future Technology</div>
+        <div class="meta"><span class='chip'>chronovanta</span><span class='chip'>short</span><span class="muted">Goes public 07 Nov, 07:00 AM</span></div>
+      </div>
+    </a>
+    <a class="vid" href="https://www.youtube.com/watch?v=6gNTZrb5hx8" target="_blank" rel="noopener">
+      <img loading="lazy" src="https://i.ytimg.com/vi/6gNTZrb5hx8/mqdefault.jpg" alt="">
+      <div class="vid-body">
+        <div class="vid-title">Could AI Architects Design Entire Cities? | Chronovanta | Future Technology</div>
+        <div class="meta"><span class='chip'>chronovanta</span><span class='chip'>short</span><span class="muted">Published 06 Nov, 12:15 AM</span></div>
+      </div>
+    </a></div>
+    </section>
+  </div>
+</main>
+
+<footer class="wrap">
+  Built automatically by the daily GitHub Actions run. This page only reports —
+  to build or upload something, use <b>Actions → Daily videos → Run workflow</b>.<br>
+  <a href="privacy.html">Privacy policy</a> · <a href="terms.html">Terms of service</a>
+</footer>
+</body></html>
